@@ -1,5 +1,5 @@
-# Install huacnlee/cargo in place of the rustup `cargo` proxy for the current Windows user.
-#   irm https://huacnlee.github.io/cargo/install.ps1 | iex
+# Install M4n5ter/cargo in place of the rustup `cargo` proxy for the current Windows user.
+#   irm https://github.com/M4n5ter/cargo/releases/latest/download/install.ps1 | iex
 [CmdletBinding()]
 param(
     [string]$Version = 'latest',
@@ -14,7 +14,7 @@ $target = Join-Path $InstallDir 'cargo.exe'
 $backup = Join-Path $InstallDir 'cargo.rustup.exe'
 # Reads the file instead of running it: older builds recurse when run as rustup.
 function Test-ForkCargo([string]$Path) {
-    [Text.Encoding]::GetEncoding(28591).GetString([IO.File]::ReadAllBytes($Path)).Contains('huacnlee/cargo')
+    [Text.Encoding]::GetEncoding(28591).GetString([IO.File]::ReadAllBytes($Path)) -match '(huacnlee|M4n5ter)/cargo'
 }
 # Earlier versions of this script overwrote rustup.exe with this cargo, which
 # breaks rustup and every proxy. Puts the real one back.
@@ -32,7 +32,7 @@ function Restore-Rustup {
 }
 if ($Uninstall) {
     if (-not (Test-Path -LiteralPath $backup)) { throw "Nothing to restore: $backup does not exist." }
-    if (Test-ForkCargo $backup) { throw "$backup is huacnlee/cargo, not the original; reinstall rustup from https://rustup.rs." }
+    if (Test-ForkCargo $backup) { throw "$backup is a forked cargo; reinstall rustup from https://rustup.rs." }
     Restore-Rustup
     Move-Item -LiteralPath $backup -Destination $target -Force
     Write-Host "Restored $target"
@@ -43,14 +43,15 @@ $triple = switch ($architecture) {
     'AMD64' { 'x86_64-pc-windows-msvc' }
     default { throw "Unsupported CPU architecture: $architecture (Windows releases support x86_64 only)." }
 }
+$repo = 'M4n5ter/cargo'
 if ($Version -eq 'latest') {
-    $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/huacnlee/cargo/releases/latest'
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest"
     $Version = $release.tag_name
 }
 $Version = $Version -replace '^v', ''
 if ($Version -notmatch '^\d+\.\d+\.\d+([.-][A-Za-z0-9.-]+)?$') { throw 'Version must be a release version such as 0.102.0-1 or v0.102.0-1.' }
 $asset = "cargo-$Version-$triple.zip"
-$base = "https://github.com/huacnlee/cargo/releases/download/v$Version"
+$base = "https://github.com/$repo/releases/download/v$Version"
 $work = Join-Path ([IO.Path]::GetTempPath()) ('cargo-install-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $work | Out-Null
 try {

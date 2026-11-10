@@ -1,7 +1,7 @@
 #!/bin/sh
-# Install huacnlee/cargo in place of the rustup `cargo` proxy. No sudo required.
+# Install M4n5ter/cargo in place of the rustup `cargo` proxy. No sudo required.
 #
-#   curl -fsSL https://huacnlee.github.io/cargo/install.sh | sh
+#   curl -fsSL https://github.com/M4n5ter/cargo/releases/latest/download/install.sh | sh
 #   sh install.sh --uninstall   # put the rustup proxy back
 set -eu
 
@@ -27,11 +27,11 @@ done
 die() { printf 'cargo installer: %s\n' "$*" >&2; exit 1; }
 target="$destination/cargo"
 backup="$destination/cargo.rustup"
-is_fork() { grep -aq 'huacnlee/cargo' "$1"; }
+is_fork() { grep -aEq '(huacnlee|M4n5ter)/cargo' "$1"; }
 
 if [ -n "$uninstall" ]; then
   [ -e "$backup" ] || die "Nothing to restore: $backup does not exist."
-  if is_fork "$backup"; then die "$backup is huacnlee/cargo, not the original; reinstall rustup from https://rustup.rs."; fi
+  if is_fork "$backup"; then die "$backup is a forked cargo; reinstall rustup from https://rustup.rs."; fi
   mv -f "$backup" "$target"
   printf 'Restored %s\n' "$target"
   exit 0
@@ -49,7 +49,7 @@ case "$(uname -m)" in
   *) die 'Unsupported CPU architecture (requires x86_64 or arm64).' ;;
 esac
 download() { curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location "$@"; }
-repo=https://github.com/huacnlee/cargo
+repo=https://github.com/M4n5ter/cargo
 if [ "$version" = latest ]; then
   release_url="$(download --output /dev/null --write-out '%{url_effective}' "$repo/releases/latest")"
   version="${release_url##*/}"

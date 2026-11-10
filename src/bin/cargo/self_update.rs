@@ -22,7 +22,7 @@ use anyhow::{Context as _, bail};
 use cargo::GlobalContext;
 use cargo::util::CargoResult;
 
-const REPO: &str = "https://github.com/huacnlee/cargo";
+const REPO: &str = "https://github.com/M4n5ter/cargo";
 /// Set on the detached child: run the update instead of a command.
 const CHILD_ENV: &str = "__CARGO_FORK_SELF_UPDATE";
 const STAMP_FILE: &str = ".fork-update";
@@ -194,7 +194,7 @@ fn latest_release() -> CargoResult<String> {
     easy.url(&format!("{REPO}/releases/latest"))?;
     easy.follow_location(true)?;
     easy.nobody(true)?;
-    easy.useragent("huacnlee-cargo-updater")?;
+    easy.useragent("m4n5ter-cargo-updater")?;
     easy.timeout(Duration::from_secs(30))?;
     easy.perform()?;
     let url = easy
@@ -215,7 +215,7 @@ fn download(url: &str) -> CargoResult<Vec<u8>> {
     easy.url(url)?;
     easy.follow_location(true)?;
     easy.fail_on_error(true)?;
-    easy.useragent("huacnlee-cargo-updater")?;
+    easy.useragent("m4n5ter-cargo-updater")?;
     easy.timeout(Duration::from_secs(600))?;
     {
         let mut transfer = easy.transfer();

@@ -2,12 +2,12 @@
 # Runs a release binary the way users have it: installed as
 # `$CARGO_HOME/bin/cargo`, outside CI, so the background self-update starts.
 #
-#   ci/smoke-installed.sh path/to/cargo[.exe]
+#   ci/smoke-installed.sh path/to/cargo[.exe] [--published]
 #
 # Checks that `cargo -V` prints the version and returns at once even while the
 # update check hangs (its output is read through a pipe, as terminals and IDEs
-# do, so an inherited handle would hold it open), and that the update check
-# itself completes.
+# do, so an inherited handle would hold it open). After publishing, checks
+# that the updater can find the GitHub release.
 set -euo pipefail
 
 bin="$1"
@@ -26,6 +26,14 @@ log="$home/.fork-update.log"
 run() {
     env -u CI -u GITHUB_ACTIONS -u CARGO_FORK_AUTO_UPDATE CARGO_HOME="$home" "$@"
 }
+
+if [ "${2:-}" = --published ]; then
+    run "$cargo" -V
+    for _ in $(seq 90); do [ -f "$log" ] && break; sleep 1; done
+    echo "check: $(cat "$log" 2>/dev/null || echo 'no log')"
+    grep -qE 'up to date|updated' "$log"
+    exit
+fi
 
 # A proxy that accepts connections and never answers: the update check hangs
 # until its 30 s timeout.
@@ -57,13 +65,6 @@ test -f "$home/.fork-update" || { echo "the update check did not start" >&2; exi
 for _ in $(seq 90); do [ -f "$log" ] && break; sleep 1; done
 echo "hung check: $(cat "$log" 2>/dev/null || echo 'no log')"
 grep -q failed "$log"
-
-# A real check against GitHub completes.
-rm -f "$log" "$home/.fork-update"
-run "$cargo" -V >/dev/null
-for _ in $(seq 90); do [ -f "$log" ] && break; sleep 1; done
-echo "check: $(cat "$log" 2>/dev/null || echo 'no log')"
-grep -qE 'up to date|updated' "$log"
 
 # Still runs afterwards.
 run "$cargo" -V
